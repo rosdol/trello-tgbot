@@ -1,12 +1,13 @@
 import telebot
 
 from config import Config
-from users import create_user, show_users
+from users import create_user, show_users, load_users
 from trello_bot import get_board, get_all_boards
 
 bot = telebot.TeleBot(Config.telegramApiKey)
 
 tg_id_dict = {}
+
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
@@ -34,7 +35,7 @@ def new_user_step2(message):
         "Как назовем пользователя?",
     )
     bot.register_next_step_handler(
-        message, 
+        message,
         new_user_step3,
     )
 
@@ -43,7 +44,6 @@ def new_user_step3(message):
     chat_id = message.chat.id
     create_user(message.text, tg_id_dict[chat_id])
     show_users()
-
 
 
 bot.polling()
