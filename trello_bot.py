@@ -7,10 +7,7 @@ client = TrelloClient(
     )
 
 def get_all_boards():
-    answer = ''
-    for board in client.list_boards():
-        answer+=f'{board.name}\n'
-    return answer
+    return client.list_boards()
 
 
 def get_board():
@@ -37,8 +34,7 @@ def get_list_by_name(board, name):
         if lst.name.lower() == name.lower():
             return lst
     return False
-# if __name__ == "__main__":
-#     print(type(get_board()))
+
 
 def get_cards(lst):
     return lst.list_cards()

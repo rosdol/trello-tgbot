@@ -13,7 +13,6 @@ class User(object):
         self.telegram_id = telegram_id
         self.list_id = list_id
 
-
     def set_telegram_id(self, telegram_id):
         self.telegram_id = telegram_id
 
@@ -36,6 +35,13 @@ def create_user(name, telegram_id):
     save_users()
 
 
+def get_user_by_telegram_id(telegram_id):
+    for user in users:
+        if user.telegram_id == telegram_id:
+            return user
+    return False
+
+
 def show_users():
     return users
 
@@ -55,4 +61,8 @@ def load_users():
 def get_all_users():
     return(users)
 
-load_users()
+
+try:
+    load_users()
+except FileNotFoundError:
+    pass
