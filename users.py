@@ -8,21 +8,24 @@ def load_users():
 users = []
 
 class User(object):
-    def __init__(self, name, telegram_id, list_id=''):
+    def __init__(self, name, telegram_id, board_id, list_id):
         self.name = name
         self.telegram_id = telegram_id
+        self.board_id = board_id
         self.list_id = list_id
 
-    def set_telegram_id(self, telegram_id):
-        self.telegram_id = telegram_id
+    def set_list(self, board_id, list_id):
+        self.board_id = board_id
+        self.list_id = list_id
 
     def __repr__(self):
-        return f'{self.name} - tg_id={self.telegram_id}'
+        return f'{self.name} - tg_id={self.telegram_id} - board id={self.board_id} - list id={self.list_id}'
 
 
 class UserSchema(Schema):
     name = fields.String()
     telegram_id = fields.Integer()
+    board_id = fields.String()
     list_id = fields.String()
 
     @post_load
@@ -31,7 +34,7 @@ class UserSchema(Schema):
 
 
 def create_user(name, telegram_id):
-    users.append(User(name, telegram_id))
+    users.append(User(name, telegram_id, '', ''))
     save_users()
 
 

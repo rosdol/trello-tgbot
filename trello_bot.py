@@ -10,18 +10,21 @@ def get_all_boards():
     return client.list_boards()
 
 
-def get_board():
-    all_boards = client.list_boards()
-    last_board = all_boards[-1]
-    return last_board.name
-
-
 def get_board_by_name(name):
     boards = get_all_boards()
     for board in boards:
         if board.name.lower() == name.lower():
             return board
     return False
+
+
+def get_board_by_id(id):
+    boards = get_all_boards()
+    for board in boards:
+        if board.id == id:
+            return board
+    return False
+
 
 
 def get_boards_list(board):
@@ -36,6 +39,14 @@ def get_list_by_name(board, name):
     return False
 
 
+def get_list_by_id(board, id):
+    lists = get_boards_list(board)
+    for lst in lists:
+        if lst.id == id:
+            return lst
+    return False
+
+
 def get_cards(lst):
     return lst.list_cards()
 
@@ -46,3 +57,6 @@ def get_card_by_name(lst, name):
         if card.name.lower() == name.lower():
             return card
     return False
+
+if __name__ == "__main__":
+    print(client.get_board('60ec68f5ac874d1fcbf35c6f').get_list('60ebface7d8b355d149c1fec'))
