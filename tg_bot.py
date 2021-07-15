@@ -39,7 +39,11 @@ def my_cards(message):
     board = get_board_by_id(user.board_id)
     lst = get_list_by_id(board, user.list_id)
     for card in lst.list_cards():
-        answer+=f'{card.name}\n\n'
+        if card.due_date == '':
+            answer+=f'{card.name}\n\n'
+        else:
+            date = card.due_date
+            answer+=f'{card.name}\n срок: {date.hour+3}:{date.minute} {date.day}.{date.month}.{date.year}\n'
     bot.send_message(message.chat.id, answer)
 
 

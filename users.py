@@ -34,6 +34,9 @@ class UserSchema(Schema):
 
 
 def create_user(name, telegram_id):
+    old_user = get_user_by_telegram_id(telegram_id)
+    if old_user is not False:
+        return
     users.append(User(name, telegram_id, '', ''))
     save_users()
 

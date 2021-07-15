@@ -26,7 +26,6 @@ def get_board_by_id(id):
     return False
 
 
-
 def get_boards_list(board):
     return board.list_lists()
 
@@ -57,6 +56,3 @@ def get_card_by_name(lst, name):
         if card.name.lower() == name.lower():
             return card
     return False
-
-if __name__ == "__main__":
-    print(client.get_board('60ec68f5ac874d1fcbf35c6f').get_list('60ebface7d8b355d149c1fec'))
