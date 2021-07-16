@@ -1,5 +1,7 @@
 import telebot
 
+import datetime
+
 from config import Config
 from users import (
     create_user,
@@ -18,9 +20,10 @@ from trello_bot import (
     get_list_by_id,
     get_board_by_id,
 )
-
+import pytz
 bot = telebot.TeleBot(Config.telegramApiKey)
 
+timezone = pytz.timezone("Europe/Moscow")
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
@@ -34,17 +37,13 @@ def get_all_lists(message):
 
 @bot.message_handler(commands=['get_my_cards'])
 def my_cards(message):
-    answer = ''
     user = get_user_by_telegram_id(message.from_user.id)
+    if user is False:
+        bot.reply_to(message, "У вас нет своего листа")
+        return
     board = get_board_by_id(user.board_id)
     lst = get_list_by_id(board, user.list_id)
-    for card in lst.list_cards():
-        if card.due_date == '':
-            answer+=f'{card.name}\n\n'
-        else:
-            date = card.due_date
-            answer+=f'{card.name}\n срок: {date.hour+3}:{date.minute} {date.day}.{date.month}.{date.year}\n'
-    bot.send_message(message.chat.id, answer)
+    bot.send_message(message.chat.id, show_cards(lst))
 
 
 @bot.message_handler(commands=['link_list_with_user'])
@@ -62,7 +61,7 @@ def link_list_with_user(message):
         user = get_user_by_telegram_id(reply_message.from_user.id)
         is_getcard = False
         select_board(message)
-        
+
 
 @bot.message_handler(commands=['newuser'])
 def new_user(message):
@@ -84,7 +83,7 @@ def all_users(message):
 
 @bot.message_handler(commands=['getcards'])
 def all_boards(message):
-    global is_getcard 
+    global is_getcard
     is_getcard = True
     select_board(message)
 
@@ -128,16 +127,22 @@ def get_cards(message):
     lst = get_list_by_name(board, message.text)
     markup = telebot.types.ReplyKeyboardRemove(selective=False)
     if is_getcard:
-        answer = ''
-        for card in lst.list_cards():
-            answer+=f'{card.name}\n\n'
-        if answer == '':
-            answer = 'Тут пусто'
-        bot.send_message(message.chat.id, answer, reply_markup=markup)
+        bot.send_message(message.chat.id, show_cards(lst), reply_markup=markup)
     else:
         global user
         user.list_id = lst.id
         save_users()
         bot.send_message(message.chat.id, '👍', reply_markup=markup)
 
+
+def show_cards(lst):
+    answer = f'{lst.name}\n---------\n'
+    for card in lst.list_cards():
+        if card.due_date == '':
+            answer+=f'{card.name}\n\n'
+        else:
+            date = card.due_date.astimezone(timezone)
+            date_time = date.strftime('%H:%M %d.%m.%y')
+            answer+=f'{card.name}\n срок: {date_time}\n'
+    return answer
 bot.polling()
