@@ -50,9 +50,20 @@ def get_cards(lst):
     return lst.list_cards()
 
 
+def get_member_by_id(board_id, trello_id):
+    board = get_board_by_id(board_id)
+    for member in board.all_members():
+        if member.id == trello_id:
+            return member
+    return False
+
+
 def get_card_by_name(lst, name):
     cards = get_cards(lst)
     for card in cards:
         if card.name.lower() == name.lower():
             return card
     return False
+
+if __name__ == '__main__':
+    print(get_board_by_name('Задания работников').all_members()[0].full_name)

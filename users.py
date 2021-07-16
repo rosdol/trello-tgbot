@@ -8,18 +8,19 @@ def load_users():
 users = []
 
 class User(object):
-    def __init__(self, name, telegram_id, board_id, list_id):
+    def __init__(self, name, telegram_id, board_id, list_id, trello_id):
         self.name = name
         self.telegram_id = telegram_id
         self.board_id = board_id
         self.list_id = list_id
+        self.trello_id = trello_id
 
     def set_list(self, board_id, list_id):
         self.board_id = board_id
         self.list_id = list_id
 
     def __repr__(self):
-        return f'{self.name} - tg_id={self.telegram_id} - board id={self.board_id} - list id={self.list_id}'
+        return f'{self.name} - trello {self.trello_id} - tg_id={self.telegram_id} - board id={self.board_id} - list id={self.list_id}'
 
 
 class UserSchema(Schema):
@@ -27,6 +28,7 @@ class UserSchema(Schema):
     telegram_id = fields.Integer()
     board_id = fields.String()
     list_id = fields.String()
+    trello_id = fields.String()
 
     @post_load
     def make(self, data, **kwargs):
@@ -37,7 +39,7 @@ def create_user(name, telegram_id):
     old_user = get_user_by_telegram_id(telegram_id)
     if old_user is not False:
         return
-    users.append(User(name, telegram_id, '', ''))
+    users.append(User(name, telegram_id, '', '', ''))
     save_users()
 
 

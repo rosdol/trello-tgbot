@@ -2,6 +2,8 @@ import telebot
 
 import datetime
 
+from trello import Card
+
 from config import Config
 from users import (
     create_user,
@@ -19,6 +21,7 @@ from trello_bot import (
     get_cards,
     get_list_by_id,
     get_board_by_id,
+    get_member_by_id,
 )
 import pytz
 bot = telebot.TeleBot(Config.telegramApiKey)
@@ -43,7 +46,8 @@ def my_cards(message):
         return
     board = get_board_by_id(user.board_id)
     lst = get_list_by_id(board, user.list_id)
-    bot.send_message(message.chat.id, show_cards(lst))
+    member = get_member_by_id(user.board_id, user.trello_id)
+    bot.send_message(message.chat.id, show_cards(lst, member.fetch_cards()))
 
 
 @bot.message_handler(commands=['link_list_with_user'])
@@ -125,17 +129,33 @@ def get_cards(message):
             bot.register_next_step_handler(message, select_board)
             return
     lst = get_list_by_name(board, message.text)
-    markup = telebot.types.ReplyKeyboardRemove(selective=False)
     if is_getcard:
+        markup = telebot.types.ReplyKeyboardRemove(selective=False)
         bot.send_message(message.chat.id, show_cards(lst), reply_markup=markup)
     else:
+        markup = telebot.types.ReplyKeyboardMarkup(row_width=2)
+        global members
+        members = {}
+        for member in board.all_members():
+            members[member.full_name] = member.id
+            button = telebot.types.KeyboardButton(member.full_name)
+            markup.add(button)
         global user
         user.list_id = lst.id
-        save_users()
-        bot.send_message(message.chat.id, '👍', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Выберите пользователя:', reply_markup=markup)
+        bot.register_next_step_handler(message, get_trello_user)
 
 
-def show_cards(lst):
+def get_trello_user(message):
+    global user
+    global members
+    markup = telebot.types.ReplyKeyboardRemove(selective=False)
+    user.trello_id = members[message.text]
+    save_users()
+    bot.send_message(message.chat.id, '👍', reply_markup=markup)
+
+# member_id = 60d4ae0fb1fd0731df2ff8c4
+def show_cards(lst, cards=[]):
     answer = f'{lst.name}\n---------\n'
     for card in lst.list_cards():
         if card.due_date == '':
@@ -143,6 +163,14 @@ def show_cards(lst):
         else:
             date = card.due_date.astimezone(timezone)
             date_time = date.strftime('%H:%M %d.%m.%y')
+            print(card.member_id)
             answer+=f'{card.name}\n срок: {date_time}\n'
+    if len(cards) > 0:
+        answer += '---------\nОбщие задания:\n---------\n'
+        for card in cards:
+            if card['due'] is not None:
+                answer+=f"{card['name']}\n срок: {card['due']}\n"
+            else:
+                answer += f"{card['name']}\n"
     return answer
 bot.polling()
