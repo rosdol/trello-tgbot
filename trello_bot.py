@@ -64,6 +64,3 @@ def get_card_by_name(lst, name):
         if card.name.lower() == name.lower():
             return card
     return False
-
-if __name__ == '__main__':
-    print(get_board_by_name('Задания работников').all_members()[0].full_name)

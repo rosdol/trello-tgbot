@@ -66,6 +66,7 @@ def load_users():
     global users
     users = UserSchema().load(data, many=True)
 
+
 def get_all_users():
     return(users)
 

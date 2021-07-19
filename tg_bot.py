@@ -3,6 +3,8 @@ import telebot
 import datetime
 
 from trello import Card
+import threading
+from dateutil import parser as dateparser
 
 from config import Config
 from users import (
@@ -28,15 +30,6 @@ bot = telebot.TeleBot(Config.telegramApiKey)
 
 timezone = pytz.timezone("Europe/Moscow")
 
-@bot.message_handler(commands=['start'])
-def start_command(message):
-    bot.send_message(message.chat.id, get_board())
-
-
-@bot.message_handler(commands=['get_all_lists'])
-def get_all_lists(message):
-    bot.send_message(message.chat.id, get_all_boards())
-
 
 @bot.message_handler(commands=['get_my_cards'])
 def my_cards(message):
@@ -50,9 +43,11 @@ def my_cards(message):
     bot.send_message(message.chat.id, show_cards(lst, member.fetch_cards()))
 
 
-@bot.message_handler(commands=['link_list_with_user'])
+@bot.message_handler(commands=['newuser'])
 def link_list_with_user(message):
+    print(message, '\n\n------------')
     reply_message = message.reply_to_message
+    print(reply_message, '\n\n')
     if reply_message is None:
         bot.reply_to(
             message,
@@ -67,25 +62,7 @@ def link_list_with_user(message):
         select_board(message)
 
 
-@bot.message_handler(commands=['newuser'])
-def new_user(message):
-    reply_message = message.reply_to_message
-    if reply_message is None:
-        bot.reply_to(
-            message,
-            "Ответьте этой командой на сообщение пользователя",
-        )
-    else:
-        create_user(reply_message.from_user.first_name, reply_message.from_user.id)
-        bot.reply_to(message, "Ок")
-
-
-@bot.message_handler(commands=['allUsers'])
-def all_users(message):
-    bot.reply_to(message, str(get_all_users()))
-
-
-@bot.message_handler(commands=['getcards'])
+@bot.message_handler(commands=['get_all_cards'])
 def all_boards(message):
     global is_getcard
     is_getcard = True
@@ -117,10 +94,10 @@ def select_list(message):
         button = telebot.types.KeyboardButton(list.name)
         markup.add(button)
     bot.send_message(message.chat.id, "Выберите колонку:", reply_markup=markup)
-    bot.register_next_step_handler(message, get_cards)
+    bot.register_next_step_handler(message, get_card)
 
 
-def get_cards(message):
+def get_card(message):
     global board
     global is_getcard
 
@@ -156,21 +133,32 @@ def get_trello_user(message):
 
 # member_id = 60d4ae0fb1fd0731df2ff8c4
 def show_cards(lst, cards=[]):
-    answer = f'{lst.name}\n---------\n'
+    answer = f'{lst.name}\n------------------\n'
     for card in lst.list_cards():
         if card.due_date == '':
             answer+=f'{card.name}\n\n'
         else:
             date = card.due_date.astimezone(timezone)
             date_time = date.strftime('%H:%M %d.%m.%y')
-            print(card.member_id)
-            answer+=f'{card.name}\n срок: {date_time}\n'
+            answer+=f'{card.name}\n ↳ до: {date_time}\n'
     if len(cards) > 0:
-        answer += '---------\nОбщие задания:\n---------\n'
+        answer += '------------------\nОбщие задания:\n------------------\n'
         for card in cards:
             if card['due'] is not None:
-                answer+=f"{card['name']}\n срок: {card['due']}\n"
+                date = dateparser.parse(card['due']).astimezone(timezone)
+                date_time = date.strftime('%H:%M %d.%m.%y')
+                answer+=f"{card['name']}\n ↳ до: {date_time}\n"
             else:
-                answer += f"{card['name']}\n"
+                answer+=f"{card['name']}\n\n"
     return answer
-bot.polling()
+
+@bot.message_handler(commands=['getcards'])
+def all_boards(message):
+    global is_getcard
+    is_getcard = True
+    select_board(message)
+
+try:
+    bot.polling(none_stop=True)
+except:
+    pass
